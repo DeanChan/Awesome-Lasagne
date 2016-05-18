@@ -1,0 +1,48 @@
+from multiprocessing import Pool
+from scipy.misc import imread
+import numpy as np
+
+def load_img_txt(txt_path, img_path):
+    """
+    X, y = load_img_txt(txt_path, img_path)
+    
+    txt_path: ./relative/path/to/img label
+    img_path: /absolute/path/to/imgs/
+    return: 
+            X: list of absolute paths to every image
+            y: list of int numbers
+    """
+    data, labels = [], []
+    with open(txt_path, 'r') as f:
+        raw_strings = f.readlines()
+    for raw_line in raw_strings:
+        rl_path, label = raw_line.split(' ')
+        data.append(img_path + rl_path[2:])
+        labels.append(int(label))
+
+    return data, labels
+
+def parallel_load(path_list, num_processes=4):
+    """
+    Load a bunch of images in parallel.
+    """
+    num_processes = min(5, len(path_list))
+    pool = Pool(num_processes)
+    imgs = pool.map(imread, path_list)
+    pool.close()
+    pool.join()
+    
+    return np.array(imgs)
+
+
+
+
+#DEPRECATED
+# def load_np_array(path):
+#     """
+#     Load numpy array in a lazy style,
+#     with np.mmap_mode = 'r'
+#     file: xxx.npz/xxx.npy include numpy array only
+#     """
+#     data_dict = np.load(path, mmap_mode = 'r')
+#     return data_dict['Data'], data_dict['Label']
