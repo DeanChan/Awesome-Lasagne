@@ -26,7 +26,7 @@ def parallel_load(path_list, num_processes=4):
     """
     Load a bunch of images in parallel.
     """
-    num_processes = min(5, len(path_list))
+    num_processes = min(num_processes, len(path_list))
     pool = Pool(num_processes)
     imgs = pool.map(imread, path_list)
     pool.close()
