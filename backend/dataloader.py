@@ -1,6 +1,7 @@
 from multiprocessing import Pool
 from scipy.misc import imread
 import numpy as np
+import theano
 
 def load_img_txt(txt_path, img_path):
     """
@@ -32,7 +33,11 @@ def parallel_load(path_list, num_processes=4):
     pool.close()
     pool.join()
     
-    return np.array(imgs)
+    out_data = np.array(imgs, dtype=theano.config.floatX)
+    if out_data.ndim == 3:
+        return out_data[:, np.newaxis, :, :]
+    else:
+        return out_data.transpose((0, 3, 1, 2))
 
 
 
