@@ -23,6 +23,7 @@ def load_img_txt(txt_path, img_path):
 
     return data, labels
 
+
 def parallel_load(path_list, num_processes=4):
     """
     Load a bunch of images in parallel.

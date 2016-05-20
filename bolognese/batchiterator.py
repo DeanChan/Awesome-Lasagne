@@ -80,6 +80,7 @@ class BatchIterator(object):
     def augmentation(self, X):
         return self.augment(X) if self.augment is not None else X
 
+
 class DataAugmentation(object):
     """
     Chose a subset of input images randomly and replace them with disordered ones.
