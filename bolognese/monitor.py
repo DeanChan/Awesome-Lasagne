@@ -28,14 +28,19 @@ class PrintLog:
 
     def __call__(self, train_history):
         if train_history[-1]['epoch'] % self.print_interval == 0:
-            to_print = self.table(train_history)
+            to_print = self.table(train_history, self.first_iteration)
+            
+            if self.first_iteration: self.first_iteration = False 
+            
             print(to_print)
             sys.stdout.flush()
+            
             if self.log_file is not None:
                 for s in to_print.split('\n'):
                     os.system('echo {} >> {}'.format(self.decolorize(s), self.log_file))
-
-    def table(self, train_history):
+    
+    @staticmethod
+    def table(train_history, first_iteration):
         info = train_history[-1]
 
         info_tabulate = OrderedDict([
@@ -66,15 +71,15 @@ class PrintLog:
             [info_tabulate], headers="keys")
 
         out = ""
-        if self.first_iteration:
+        if first_iteration:
             out = "\n".join(tabulated.split('\n', 2)[:2])
             out += "\n"
-            self.first_iteration = False
 
         out += tabulated.rsplit('\n', 1)[-1]
         return out
 
-    def decolorize(self, string):
+    @staticmethod
+    def decolorize(string):
         color_pattern = r'\033\[\d+m'
         return re.sub(color_pattern, '', string)
 
@@ -93,6 +98,7 @@ class AutoSnapshot:
         self.milestone = milestone
         self.lowerbound_trigger = lowerbound_trigger
         self.info_file = self.path + 'model_info.txt'
+        self.first_iteration = True
         
     def __call__(self, model, train_history):
         info = train_history[-1]
@@ -107,7 +113,8 @@ class AutoSnapshot:
         np.savez(filename, *all_params)
 
     def snap_record(self, train_history):
-        model_info = PrintLog.table(train_history)
+        model_info = PrintLog.table(train_history, self.first_iteration)
+        if self.first_iteration: self.first_iteration = False 
         for s in model_info.split('\n'):
             os.system('echo {} >> {}'.format(PrintLog.decolorize(s), self.info_file))
 
