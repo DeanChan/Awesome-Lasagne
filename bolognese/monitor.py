@@ -86,7 +86,6 @@ class PrintLog:
 
 class AutoSnapshot:
     """
-    TO BE TESTED: @staricmethod or @classmethod of PrintLog.table and PrintLog.decolorize
     1. milestone: int, save model parameters every a specified interval
     2. lowerbound_trigger: float, save best parameters when accuracy is lager than it
     """
