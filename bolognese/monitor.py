@@ -1,5 +1,8 @@
 import sys
 import os
+import re
+import lasagne
+import numpy as np
 from collections import OrderedDict
 from tabulate import tabulate
 
@@ -18,17 +21,19 @@ class PrintLog:
     This class is modified from 
     https://github.com/dnouri/nolearn/blob/master/nolearn/lasagne/handlers.py#-17-62
     """
-    def __init__(self, log_save_path=None):
+    def __init__(self, log_save_path=None, print_interval=1):
         self.first_iteration = True
-        self.log_save_path = log_save_path
+        self.log_save_path = log_save_path if log_save_path[-1] == '/' else log_save_path + '/'
+        self.print_interval = print_interval
 
     def __call__(self, train_history):
-        to_print = self.table(train_history)
-        print(to_print)
-        sys.stdout.flush()
-        if self.log_save_path is not None:
-            for s in to_print.split('\n'):
-                os.system('echo {} >> {}'.format(s, self.log_save_path))
+        if train_history[-1]['epoch'] % self.print_interval == 0:
+            to_print = self.table(train_history)
+            print(to_print)
+            sys.stdout.flush()
+            if self.log_save_path is not None:
+                for s in to_print.split('\n'):
+                    os.system('echo {} >> {}'.format(self.decolorize(s), self.log_save_path))
 
     def table(self, train_history):
         info = train_history[-1]
@@ -49,7 +54,7 @@ class PrintLog:
             ])
 
         if 'valid_accuracy' in info:
-            info_tabulate['valid acc'] = "{}{:.2f}{}".format(
+            info_tabulate['valid acc'] = "{}{:.4f}{}".format(
                 ansi.RED if info['valid_accuracy_best'] else "",
                 info['valid_accuracy'],
                 ansi.ENDC if info['valid_accuracy_best'] else "",
@@ -58,7 +63,7 @@ class PrintLog:
         info_tabulate['dur'] = "{:.2f}s".format(info['dur'])
 
         tabulated = tabulate(
-            [info_tabulate], headers="keys", floatfmt='.5f')
+            [info_tabulate], headers="keys")
 
         out = ""
         if self.first_iteration:
@@ -68,3 +73,41 @@ class PrintLog:
 
         out += tabulated.rsplit('\n', 1)[-1]
         return out
+
+    def decolorize(self, string):
+        color_pattern = r'\033\[\d+m'
+        return re.sub(color_pattern, '', string)
+
+
+class AutoSnapshot:
+    """
+    1. milestone: int, save model parameters every a specified interval
+    2. lowerbound_trigger: float, save best parameters when accuracy is lager than it
+    """
+    def __init__(self, 
+        path,
+        milestone=200,
+        lowerbound_trigger=0.99):
+        self.path = path if path[-1] == '/' else path + '/'
+        self.milestone = milestone
+        self.lowerbound_trigger = lowerbound_trigger
+        self.info_file = self.path + 'model_info.txt'
+        
+    def __call__(self, model, train_history):
+        info = train_history[-1]
+        if (info['epoch'] % milestone == 0) or \
+           (info['valid_accuracy_best'] and info['valid_accuracy'] >= self.lowerbound_trigger):
+            self.dump_model(model, info['epoch'])
+            self.snap_record(train_history)
+
+
+    def dump_model(self, model, epoch):
+        all_params = lasagne.layers.get_all_param_values(model)
+        filename = self.path + 'epoch_{}.npz'.format(epoch)
+        np.savez(filename, *all_params)
+
+    def snap_record(self, train_history):
+        model_info = PrintLog.table(train_history)
+        for s in model_info.split('\n'):
+            os.system('echo {} >> {}'.format(PrintLog.decolorize(s), self.info_file))
+
