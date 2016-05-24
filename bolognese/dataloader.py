@@ -14,6 +14,7 @@ def load_img_txt(txt_path, img_path):
             y: list of int numbers
     """
     data, labels = [], []
+    img_path = img_path if img_path[-1] == '/' else img_path + '/'
     with open(txt_path, 'r') as f:
         raw_strings = f.readlines()
     for raw_line in raw_strings:

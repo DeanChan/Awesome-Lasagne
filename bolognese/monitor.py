@@ -21,9 +21,9 @@ class PrintLog:
     This class is modified from 
     https://github.com/dnouri/nolearn/blob/master/nolearn/lasagne/handlers.py#-17-62
     """
-    def __init__(self, log_save_path=None, print_interval=1):
+    def __init__(self, log_file=None, print_interval=1):
         self.first_iteration = True
-        self.log_save_path = log_save_path if log_save_path[-1] == '/' else log_save_path + '/'
+        self.log_file = log_file
         self.print_interval = print_interval
 
     def __call__(self, train_history):
@@ -31,9 +31,9 @@ class PrintLog:
             to_print = self.table(train_history)
             print(to_print)
             sys.stdout.flush()
-            if self.log_save_path is not None:
+            if self.log_file is not None:
                 for s in to_print.split('\n'):
-                    os.system('echo {} >> {}'.format(self.decolorize(s), self.log_save_path))
+                    os.system('echo {} >> {}'.format(self.decolorize(s), self.log_file))
 
     def table(self, train_history):
         info = train_history[-1]
@@ -81,6 +81,7 @@ class PrintLog:
 
 class AutoSnapshot:
     """
+    TO BE TESTED: @staricmethod or @classmethod of PrintLog.table and PrintLog.decolorize
     1. milestone: int, save model parameters every a specified interval
     2. lowerbound_trigger: float, save best parameters when accuracy is lager than it
     """
@@ -95,11 +96,10 @@ class AutoSnapshot:
         
     def __call__(self, model, train_history):
         info = train_history[-1]
-        if (info['epoch'] % milestone == 0) or \
+        if (info['epoch'] % self.milestone == 0) or \
            (info['valid_accuracy_best'] and info['valid_accuracy'] >= self.lowerbound_trigger):
             self.dump_model(model, info['epoch'])
             self.snap_record(train_history)
-
 
     def dump_model(self, model, epoch):
         all_params = lasagne.layers.get_all_param_values(model)
