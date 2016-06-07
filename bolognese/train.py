@@ -1,0 +1,67 @@
+import lasagne
+import time
+import numpy as np
+from .batchiterator import BatchIterator
+from .batchiterator import DataAugmentation
+
+def train(
+    compiled_net,
+    dataset,
+    num_epochs,
+    learning_rate,
+    batch_size,
+    print_log,
+    autosnap,
+    start_iter_stage = 0,
+    batch_iterator =BatchIterator,
+    shuffle_batch = True,
+    augmentation = DataAugmentation(p=0.3, h_flip=True, v_flip=True, rotate=False),
+    ):
+
+    try:
+        train_history = []
+        best_train_loss = np.inf
+        best_valid_loss = np.inf
+        best_valid_acc = 0
+        for epoch in range(start_iter_stage, num_epochs):
+            train_err = 0
+            train_batches = 0
+            start_time = time.time()
+            for batch in batch_iterator(dataset['X_train'], dataset['y_train'], batch_size, shuffle_batch, augmentation):
+                inputs, targets = batch
+                train_err += compiled_net['train'](inputs, targets, learning_rate)
+                train_batches += 1
+            train_loss = train_err / train_batches
+            best_train_loss = train_loss if train_loss < best_train_loss else best_train_loss
+
+            val_err = 0 
+            val_acc = 0 
+            val_batches = 0
+            for batch in batch_iterator(dataset['X_valid'], dataset['y_valid'], batch_size, False, None):
+                inputs, targets = batch
+                err, acc = compiled_net['test'](inputs, targets)
+                val_err += err 
+                val_acc += acc
+                val_batches += 1
+            valid_loss = val_err / val_batches
+            valid_acc = val_acc / val_batches
+            best_valid_loss = valid_loss if valid_loss < best_valid_loss else best_valid_loss
+            best_valid_acc = valid_acc if valid_acc > best_valid_acc else best_valid_acc
+
+            info = dict(
+                epoch = epoch,
+                train_loss = train_loss,
+                valid_loss = valid_loss,
+                train_loss_best = train_loss == best_train_loss,
+                valid_loss_best = valid_loss == best_valid_loss,
+                valid_accuracy = valid_acc,
+                valid_accuracy_best = valid_acc == best_valid_acc,
+                dur = time.time() - start_time
+                )
+
+            train_history.append(info)
+            print_log(train_history)
+            autosnap(compiled_net['net_arch']['softmax_out'], train_history)
+
+    except KeyboardInterrupt:
+        pass
