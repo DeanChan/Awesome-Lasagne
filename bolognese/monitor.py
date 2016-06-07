@@ -101,7 +101,7 @@ class AutoSnapshot:
         
     def __call__(self, model, train_history):
         info = train_history[-1]
-        if (info['epoch'] % self.milestone == 0) or \
+        if (info['epoch'] % self.milestone == 0 and info['epoch'] != 0) or \
            (info['valid_accuracy_best'] and info['valid_accuracy'] >= self.lowerbound_trigger):
             self.dump_model(model, info['epoch'])
             self.snap_record(train_history)

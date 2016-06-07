@@ -37,9 +37,9 @@ def parallel_load(path_list, num_processes=4):
     
     out_data = np.array(imgs, dtype=theano.config.floatX)
     if out_data.ndim == 3:
-        return out_data[:, np.newaxis, :, :]
+        return out_data[:, np.newaxis, :, :] / 255.0
     else:
-        return out_data.transpose((0, 3, 1, 2))
+        return out_data.transpose((0, 3, 1, 2)) /255.0
 
 
 

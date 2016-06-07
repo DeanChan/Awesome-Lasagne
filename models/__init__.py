@@ -1,1 +1,1 @@
-from Inception import build_network
+from samplemodel import *
