@@ -8,8 +8,9 @@ def train(
     compiled_net,
     dataset,
     num_epochs,
-    learning_rate,
     batch_size,
+    learning_rate,
+    extra_update_arg_list,
     print_log,
     autosnap,
     start_iter_stage = 0,
@@ -19,7 +20,6 @@ def train(
     ):
 
     try:
-        train_history = []
         best_train_loss = np.inf
         best_valid_loss = np.inf
         best_valid_acc = 0
@@ -29,7 +29,7 @@ def train(
             start_time = time.time()
             for batch in batch_iterator(dataset['X_train'], dataset['y_train'], batch_size, shuffle_batch, augmentation):
                 inputs, targets = batch
-                train_err += compiled_net['train'](inputs, targets, learning_rate)
+                train_err += compiled_net['train'](inputs, targets, learning_rate, *extra_update_arg_list)
                 train_batches += 1
             train_loss = train_err / train_batches
             best_train_loss = train_loss if train_loss < best_train_loss else best_train_loss
@@ -59,9 +59,8 @@ def train(
                 dur = time.time() - start_time
                 )
 
-            train_history.append(info)
-            print_log(train_history)
-            autosnap(compiled_net['net_arch']['softmax_out'], train_history)
+            print_log(info)
+            autosnap(compiled_net['net_arch']['softmax_out'], info)
 
     except KeyboardInterrupt:
         pass

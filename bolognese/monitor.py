@@ -26,9 +26,9 @@ class PrintLog:
         self.log_file = log_file
         self.print_interval = print_interval
 
-    def __call__(self, train_history):
-        if train_history[-1]['epoch'] % self.print_interval == 0:
-            to_print = self.table(train_history, self.first_iteration)
+    def __call__(self, info):
+        if info['epoch'] % self.print_interval == 0:
+            to_print = self.table(info, self.first_iteration)
             
             if self.first_iteration: self.first_iteration = False 
             
@@ -40,9 +40,7 @@ class PrintLog:
                     os.system('echo {} >> {}'.format(self.decolorize(s), self.log_file))
     
     @staticmethod
-    def table(train_history, first_iteration):
-        info = train_history[-1]
-
+    def table(info, first_iteration):
         info_tabulate = OrderedDict([
             ('epoch', info['epoch']),
             ('train loss', "{}{:.5f}{}".format(
@@ -98,21 +96,22 @@ class AutoSnapshot:
         self.lowerbound_trigger = lowerbound_trigger
         self.info_file = self.path + 'model_info.txt'
         self.first_iteration = True
-        
-    def __call__(self, model, train_history):
-        info = train_history[-1]
+        if not os.path.exists(self.path):
+            os.makedirs(self.path)
+       
+    def __call__(self, model, info):
         if (info['epoch'] % self.milestone == 0 and info['epoch'] != 0) or \
            (info['valid_accuracy_best'] and info['valid_accuracy'] >= self.lowerbound_trigger):
             self.dump_model(model, info['epoch'])
-            self.snap_record(train_history)
+            self.snap_record(info)
 
     def dump_model(self, model, epoch):
         all_params = lasagne.layers.get_all_param_values(model)
         filename = self.path + 'epoch_{}.npz'.format(epoch)
         np.savez(filename, *all_params)
 
-    def snap_record(self, train_history):
-        model_info = PrintLog.table(train_history, self.first_iteration)
+    def snap_record(self, info):
+        model_info = PrintLog.table(info, self.first_iteration)
         if self.first_iteration: self.first_iteration = False 
         for s in model_info.split('\n'):
             os.system('echo {} >> {}'.format(PrintLog.decolorize(s), self.info_file))
