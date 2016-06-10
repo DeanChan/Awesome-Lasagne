@@ -46,7 +46,7 @@ train(
     NUM_EPOCHES,
     BATCH_SIZE,
     BASE_LEARNING_RATE,
-    extra_update_arg_list = [0.9], # set momentum=0.9
+    # extra_update_arg_list = [0.9], # set momentum=0.9
     print_log = PRINT_LOG,
     autosnap = AUTOSNAP,
     augmentation = None # DataAugmentation(p=0.3, h_flip=True, v_flip=True, rotate=True)

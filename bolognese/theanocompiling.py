@@ -11,7 +11,7 @@ def compile_theano_expr(def_net_arch, update_method):
 
     extra_update_args = inspect.getargspec(update_method)[0][3:]
     extra_update_arg_list = []
-    for arg in extra_update_args:
+    for arg in extra_update_args: # arg is a string
         extra_update_arg_list.append(T.scalar(arg))
     
     output = lasagne.layers.get_output(net_arch['softmax_out'], X_batch, deterministic=False)
@@ -27,6 +27,10 @@ def compile_theano_expr(def_net_arch, update_method):
     loss_test = lasagne.objectives.categorical_crossentropy(output, y_batch)
     loss_test = loss_test.mean()
     acc_test = T.mean(T.eq(T.argmax(output_test, axis=1), y_batch), dtype = theano.config.floatX)
+
+    update_defaults = update_method.func_defaults
+    for i in range(len(extra_update_arg_list)):
+        extra_update_arg_list[i] = theano.In(extra_update_arg_list[i], value=update_defaults[i])
 
     train_fn = theano.function(
         [X_batch, y_batch, learning_rate]+extra_update_arg_list, loss, 
