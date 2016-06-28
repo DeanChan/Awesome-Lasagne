@@ -3,6 +3,7 @@ import time
 import numpy as np
 from .batchiterator import BatchIterator
 from .batchiterator import DataAugmentation
+from .monitor import RememberBestWeights
 
 def train(
     compiled_net,
@@ -12,11 +13,12 @@ def train(
     learning_rate,
     print_log,
     autosnap,
-    extra_update_arg_list = []],
+    extra_update_arg_list = [],
     start_iter_stage = 0,
     batch_iterator =BatchIterator,
     shuffle_batch = True,
     augmentation = DataAugmentation(p=0.3, h_flip=True, v_flip=True, rotate=False),
+    rememberbestweights = RememberBestWeights(key = 'valid_loss'),
     ):
 
     try:
@@ -61,6 +63,20 @@ def train(
 
             print_log(info)
             autosnap(compiled_net['net_arch']['softmax_out'], info)
+            rememberbestweights(compiled_net['net_arch']['softmax_out'], info)
+
+        rememberbestweights.store(
+            rememberbestweights.best_weights,
+            autosnap.path,
+            rememberbestweights.best_weights_epoch,
+            rememberbestweights.best_weights_loss
+            )
 
     except KeyboardInterrupt:
+        rememberbestweights.store(
+            rememberbestweights.best_weights,
+            autosnap.path,
+            rememberbestweights.best_weights_epoch,
+            rememberbestweights.best_weights_loss
+            )
         pass

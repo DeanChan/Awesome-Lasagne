@@ -116,3 +116,23 @@ class AutoSnapshot:
         for s in model_info.split('\n'):
             os.system('echo {} >> {}'.format(PrintLog.decolorize(s), self.info_file))
 
+
+class RememberBestWeights:
+    def __init__(self, key='valid_loss'):
+        self.key = key
+        self.best_weights = None
+        self.best_weights_loss = None
+        self.best_weights_epoch = None
+
+    def __call__(self, model, info):
+        curr_loss = info[self.key]
+
+        if info[self.key + '_best']:
+            self.best_weights = lasagne.layers.get_all_param_values(model)
+            self.best_weights_loss = curr_loss
+            self.best_weights_epoch = info['epoch']
+
+    @staticmethod
+    def store(best_weights, path, best_weights_epoch, best_weights_loss):
+        filename = path + 'BEST_epoch_{}_{}.npz'.format(best_weights_epoch, best_weights_loss)
+        np.savez(filename, *best_weights)

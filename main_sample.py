@@ -4,7 +4,7 @@ from models import def_net_arch
 from bolognese import load_img_txt
 from bolognese import compile_theano_expr
 from bolognese import train
-from bolognese import PrintLog, AutoSnapshot
+from bolognese import PrintLog, AutoSnapshot, RememberBestWeights
 from bolognese import DataAugmentation
 
 NUM_EPOCHES = 5000
@@ -46,9 +46,9 @@ train(
     NUM_EPOCHES,
     BATCH_SIZE,
     BASE_LEARNING_RATE,
-    # extra_update_arg_list = [0.9], # set momentum=0.9
     print_log = PRINT_LOG,
     autosnap = AUTOSNAP,
-    augmentation = None # DataAugmentation(p=0.3, h_flip=True, v_flip=True, rotate=True)
+    augmentation = None, # DataAugmentation(p=0.3, h_flip=True, v_flip=True, rotate=True)
+    rememberbestweights = RememberBestWeights(key = 'valid_loss')
     )
 
