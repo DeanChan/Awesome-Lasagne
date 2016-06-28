@@ -3,7 +3,7 @@ import numpy as np
 from models import def_net_arch
 from bolognese import load_img_txt
 from bolognese import compile_theano_expr
-from bolognese import train
+from bolognese import train, LrPolicy
 from bolognese import PrintLog, AutoSnapshot, RememberBestWeights
 from bolognese import DataAugmentation
 
@@ -46,6 +46,7 @@ train(
     NUM_EPOCHES,
     BATCH_SIZE,
     BASE_LEARNING_RATE,
+    lr_policy = LrPolicy('step', gamma=0.96, step=500),
     print_log = PRINT_LOG,
     autosnap = AUTOSNAP,
     augmentation = None, # DataAugmentation(p=0.3, h_flip=True, v_flip=True, rotate=True)

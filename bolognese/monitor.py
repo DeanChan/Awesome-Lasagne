@@ -63,6 +63,9 @@ class PrintLog:
                 ansi.ENDC if info['valid_accuracy_best'] else "",
                 )
 
+        if 'current_lr' in info:
+            info_tabulate['current_lr'] = info['current_lr']
+
         info_tabulate['dur'] = "{:.2f}s".format(info['dur'])
 
         tabulated = tabulate(
