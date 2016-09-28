@@ -1,4 +1,4 @@
-from multiprocessing import Pool
+from multiprocessing.dummy import Pool
 from scipy.misc import imread
 import numpy as np
 import theano

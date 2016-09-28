@@ -26,7 +26,7 @@ print('Loading data...')
 #     y_valid = [label[i] for i in indices[50000:]]
 #     )
 
-with np.load('../mnist.npz', mmap_mode = 'r') as f:
+with np.load('../test/mnist.npz', mmap_mode = None) as f:
     Data = f['Data']
     Label = f['Label']
 dataset = dict(
