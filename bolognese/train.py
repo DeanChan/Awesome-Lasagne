@@ -51,6 +51,13 @@ class LrPolicy:
         return base_lr * (1.0 / (1 + np.exp(-self.gamma * (epoch - self.step))))
 
 
+def weight_init(outputlayer, file):
+    with np.load(file) as f:
+        param_values = [f['arr_%d' % i] for i in range(len(f.files))]
+    lasagne.layers.set_all_param_values(outputlayer, param_values)
+    return 
+
+
 def train(
     compiled_net,
     dataset,
