@@ -3,7 +3,7 @@ import numpy as np
 from models import def_net_arch
 from bolognese import load_img_txt
 from bolognese import compile_theano_expr
-from bolognese import train, LrPolicy
+from bolognese import train, LrPolicy, InitialStatus
 from bolognese import PrintLog, AutoSnapshot, RememberBestWeights
 from bolognese import DataAugmentation
 
@@ -13,6 +13,7 @@ BASE_LEARNING_RATE = 0.01
 UPDATE_METHOD = lasagne.updates.nesterov_momentum
 PRINT_LOG = PrintLog(log_file = './log_sample.txt')
 AUTOSNAP = AutoSnapshot('./snapshot_sample', milestone = 200, lowerbound_trigger=0.99)
+INIT = InitialStatus('./snapshot_sample/epoch_100.npz', start_iter_stage = 100)
 
 
 print('Loading data...')
@@ -49,6 +50,7 @@ train(
     lr_policy = LrPolicy('step', gamma=0.96, step=500),
     print_log = PRINT_LOG,
     autosnap = AUTOSNAP,
+    init_stat = INIT,
     augmentation = None, # DataAugmentation(p=0.3, h_flip=True, v_flip=True, rotate=True)
     rememberbestweights = RememberBestWeights(key = 'valid_loss')
     )

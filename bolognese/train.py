@@ -51,11 +51,17 @@ class LrPolicy:
         return base_lr * (1.0 / (1 + np.exp(-self.gamma * (epoch - self.step))))
 
 
-def weight_init(outputlayer, file):
-    with np.load(file) as f:
-        param_values = [f['arr_%d' % i] for i in range(len(f.files))]
-    lasagne.layers.set_all_param_values(outputlayer, param_values)
-    return 
+class InitialStatus:
+    def __init__(self, param_file = None, start_iter_stage = 0):
+        self.param_file = param_file
+        self.start_iter_stage = start_iter_stage
+
+    @staticmethod
+    def weight_init(outputlayer, file):
+        with np.load(file) as f:
+            param_values = [f['arr_%d' % i] for i in range(len(f.files))]
+        lasagne.layers.set_all_param_values(outputlayer, param_values)
+        return 
 
 
 def train(
@@ -68,7 +74,7 @@ def train(
     print_log = PrintLog(log_file = './log_sample.txt'),
     autosnap = AutoSnapshot('./snapshot_sample'),
     extra_update_arg_list = [],
-    start_iter_stage = 0,
+    init_stat = 'Random',
     batch_iterator =BatchIterator,
     shuffle_batch = True,
     augmentation = DataAugmentation(p=0.3, h_flip=True, v_flip=True, rotate=False),
@@ -76,10 +82,17 @@ def train(
     ):
 
     try:
+        start_iter_stage = 0
         best_train_loss = np.inf
         best_valid_loss = np.inf
         best_valid_acc = 0
+        if init_stat != 'Random':
+            InitialStatus.weight_init(compiled_net['net_arch']['out'], init_stat.param_file)
+            start_iter_stage = init_stat.start_iter_stage
+        
         for epoch in range(start_iter_stage, num_epochs):
+            
+            #Training
             train_err = 0
             train_batches = 0
             start_time = time.time()
@@ -91,6 +104,7 @@ def train(
             train_loss = train_err / train_batches
             best_train_loss = train_loss if train_loss < best_train_loss else best_train_loss
 
+            #Validating/Testing
             val_err = 0 
             val_acc = 0 
             val_batches = 0
@@ -105,6 +119,7 @@ def train(
             best_valid_loss = valid_loss if valid_loss < best_valid_loss else best_valid_loss
             best_valid_acc = valid_acc if valid_acc > best_valid_acc else best_valid_acc
 
+            #Post-processing
             info = dict(
                 epoch = epoch,
                 train_loss = train_loss,

@@ -42,6 +42,11 @@ def parallel_load(path_list, num_processes=4):
         return out_data.transpose((0, 3, 1, 2)) /255.0
 
 
+class InitialStatus(object):
+    def __init__(self, param_file = None, start_iter_stage = 0):
+        super(InitialStatus, self).__init__()
+        self.arg = arg
+        
 
 
 #DEPRECATED
