@@ -5,12 +5,13 @@ from .batchiterator import BatchIterator
 from .batchiterator import DataAugmentation
 from .monitor import RememberBestWeights, PrintLog, AutoSnapshot
 
-class LrPolicy:
+class AnnealingPolicy:
     """
     method = 'fixed', 'step', 'exp', 'inv', 'poly', 'sigmoid'
     """
     def __init__(self,
         method,
+        base_lr = 0.01,
         max_iter = 30000,
         gamma = 0.9,
         step = 1000,
@@ -20,6 +21,7 @@ class LrPolicy:
         self.gamma = gamma
         self.step = float(step)
         self.power = power 
+        self.base_lr = base_lr
         table = {'fixed'   : self.fixed,
                  'step'    : self.step_,
                  'exp'     : self.exp,
@@ -29,26 +31,26 @@ class LrPolicy:
 
         self.decay = table[method]
 
-    def __call__(self, base_lr, epoch):
-        return self.decay(base_lr, epoch)
+    def __call__(self, epoch):
+        return self.decay(epoch)
 
-    def fixed(self, base_lr, epoch):
-        return base_lr
+    def fixed(self, epoch):
+        return self.base_lr
 
-    def step_(self, base_lr, epoch):
-        return base_lr * self.gamma**(np.floor(epoch / self.step))
+    def step_(self, epoch):
+        return self.base_lr * self.gamma**(np.floor(epoch / self.step))
 
-    def exp(self, base_lr, epoch):
-        return base_lr * self.gamma**(epoch)
+    def exp(self, epoch):
+        return self.base_lr * self.gamma**(epoch)
 
-    def inv(self, base_lr, epoch):
-        return base_lr * (1 + self.gamma * epoch)**(-self.power)
+    def inv(self, epoch):
+        return self.base_lr * (1 + self.gamma * epoch)**(-self.power)
 
-    def poly(self, base_lr, epoch):
-        return base_lr * (1 - epoch / self.max_iter)**(self.power)
+    def poly(self, epoch):
+        return self.base_lr * (1 - epoch / self.max_iter)**(self.power)
 
-    def sigmoid(self, base_lr, epoch):
-        return base_lr * (1.0 / (1 + np.exp(-self.gamma * (epoch - self.step))))
+    def sigmoid(self, epoch):
+        return self.base_lr * (1.0 / (1 + np.exp(-self.gamma * (epoch - self.step))))
 
 
 class InitialStatus:
@@ -69,8 +71,7 @@ def train(
     dataset,
     num_epochs,
     batch_size,
-    learning_rate,
-    lr_policy = LrPolicy('fixed'),
+    learning_rate = AnnealingPolicy('fixed', base_lr=0.01),
     print_log = PrintLog(log_file = './log_sample.txt'),
     autosnap = AutoSnapshot('./snapshot_sample'),
     extra_update_arg_list = [],
@@ -96,7 +97,7 @@ def train(
             train_err = 0
             train_batches = 0
             start_time = time.time()
-            curr_lr = lr_policy(learning_rate, epoch)
+            curr_lr = learning_rate(epoch)
             for batch in batch_iterator(dataset['X_train'], dataset['y_train'], batch_size, shuffle_batch, augmentation):
                 inputs, targets = batch
                 train_err += compiled_net['train'](inputs, targets, curr_lr, *extra_update_arg_list)

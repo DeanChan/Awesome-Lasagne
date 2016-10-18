@@ -3,13 +3,13 @@ import numpy as np
 from models import def_net_arch
 from bolognese import load_img_txt
 from bolognese import compile_theano_expr
-from bolognese import train, LrPolicy, InitialStatus
+from bolognese import train, AnnealingPolicy, InitialStatus
 from bolognese import PrintLog, AutoSnapshot, RememberBestWeights
 from bolognese import DataAugmentation
 
 NUM_EPOCHES = 5000
 BATCH_SIZE = 2000
-BASE_LEARNING_RATE = 0.01
+LEARNING_RATE = AnnealingPolicy('step', base_lr=0.01, gamma=0.96, step=500)
 UPDATE_METHOD = lasagne.updates.nesterov_momentum
 PRINT_LOG = PrintLog(log_file = './log_sample.txt')
 AUTOSNAP = AutoSnapshot('./snapshot_sample', milestone = 200, lowerbound_trigger=0.99)
@@ -46,8 +46,7 @@ train(
     dataset,
     NUM_EPOCHES,
     BATCH_SIZE,
-    BASE_LEARNING_RATE,
-    lr_policy = LrPolicy('step', gamma=0.96, step=500),
+    LEARNING_RATE,
     print_log = PRINT_LOG,
     autosnap = AUTOSNAP,
     init_stat = INIT,
